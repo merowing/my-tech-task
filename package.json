@@ -1,0 +1,20 @@
+{
+  "name": "my-task",
+  "version": "1.0.0",
+  "description": "bank, mortgage, loan, calculator etc",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://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@github.com/merowing/my-tech-task.git"
+  },
+  "author": "Yurii Kostiuchenko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/merowing/my-tech-task/issues"
+  },
+  "homepage": "https://github.com/merowing/my-tech-task#readme"
+}
