@@ -17,15 +17,26 @@ switch(process.platform) {
         start = 'xdg-open';
 }
 
+const types = { html: 'html', css: 'css', js: 'javascript' };
+
 const server = http.createServer((request, response) => {
-    fs.readFile(__dirname + "/src/index.html", (error, data) => {
+    const url = request.url;
+    let pathToFile = url === '/' ? '/src/index.html' : `/src/${url}`;
+    let contentType = "text/html";
+
+    const fileExtension = url.split('.').pop();
+    if(types[fileExtension]) {
+        contentType = `text/${types[fileExtension]}`;
+    }
+
+    fs.readFile(__dirname + pathToFile, (error, data) => {
         if(error) {
             response.writeHead(500);
             response.end(error);
             return;
         }
 
-        response.setHeader("Content-type", "text/html");
+        response.setHeader("Content-type", contentType);
         response.writeHead(200);
         response.end(data);
     });
