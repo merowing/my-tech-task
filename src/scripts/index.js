@@ -1,6 +1,6 @@
 import { infoImage } from "./images.js";
-import { storage, addBankStorage, editBankStorage, removeBankStorage } from "./localstorage.js";
-import { addBankTable, createTable } from "./table.js";
+import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage } from "./localstorage.js";
+import { addBankTable, clearTable, createTable, removeBankTable } from "./table.js";
 import unique from "./unique.js";
 
 createTable();
@@ -155,10 +155,26 @@ table.addEventListener('click', function(e) {
     const target = getRowElem(e.target, 'DIV');
     const index = [...editButtons].indexOf(target);
     
+    if(index === -1) return;
+
     const id = rows[index].querySelector('div').getAttribute('id');
-    alert(id);
+    
     const targetLi = getRowElem(e.target, 'LI');
-    console.log(targetLi);
+    
+    const className = targetLi.getAttribute('class');
+    
+    switch(className) {
+        case 'edit':
+            break;
+        case 'remove':
+            removeBankStorage(id);
+            removeBankTable(index);
+            break;
+        default:
+            clearStorage();
+            clearTable();
+    }
+
 });
 
 function getRowElem(tag, name) {

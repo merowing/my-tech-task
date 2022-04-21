@@ -23,6 +23,10 @@ function removeBankStorage(index) {
     writeStorage(data);
 }
 
+function clearStorage() {
+    localStorage.removeItem(storageName);
+}
+
 function editBankStorage(bank) {
     let data = storage();
     let id = bank.id;
@@ -31,4 +35,4 @@ function editBankStorage(bank) {
     writeStorage(data);
 }
 
-export { storage, addBankStorage, editBankStorage, removeBankStorage };
+export { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage };

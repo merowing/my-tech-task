@@ -8,11 +8,17 @@ function addBankTable(data) {
 }
 
 function removeBankTable(index) {
-
+    let rows = table.querySelectorAll('.table-row');
+    table.removeChild(rows[index]);
 }
 
 function editBankTable(index) {
 
+}
+
+function clearTable() {
+    table.innerHTML = '';
+    createTableRows(storage());    
 }
 
 function tableNodeElements(data, classStr = '') {
@@ -57,7 +63,7 @@ function createTableHead() {
         ${head.join('')}
         <div class="edit-buttons">
             <ul>
-                <li class="remove-all">${ removeImage }</li>
+                <li class="remove-all" title="remove all banks">${ removeImage }</li>
             </ul>
         </div>`;
     
@@ -84,8 +90,8 @@ function createTableRows(data) {
             ${arrDiv.join('')}
             <div class="edit-buttons">
                 <ul>
-                    <li class="edit">${ editImage }</li>
-                    <li class="remove">${ removeImage }</li>
+                    <li class="edit" title="edit">${ editImage }</li>
+                    <li class="remove" title="remove">${ removeImage }</li>
                 </ul>
             </div>`;
 
@@ -111,4 +117,4 @@ function createTable() {
     createTableRows(banks);
 }
 
-export { createTable, addBankTable, editBankTable, removeBankTable }
+export { createTable, addBankTable, editBankTable, removeBankTable, clearTable }
