@@ -21,23 +21,24 @@ const types = { html: 'html', css: 'css', js: 'javascript' };
 
 const server = http.createServer((request, response) => {
     const url = request.url;
-    let pathToFile = url === '/' ? '/src/index.html' : `/src/${url}`;
+    let pathToFile = url === '/' ? '/src/index.html' : `/src${url}`;
     let contentType = "text/html";
 
     const fileExtension = url.split('.').pop();
+
     if(types[fileExtension]) {
         contentType = `text/${types[fileExtension]}`;
     }
-
+    
+    //console.log(pathToFile, fileExtension);
     fs.readFile(__dirname + pathToFile, (error, data) => {
+        console.log(error);
         if(error) {
-            response.writeHead(500);
-            response.end(error);
-            return;
+            response.writeHead(404, {'Content-type': 'text/plain'});
+            return response.end(`File ${pathToFile} not found!`);
         }
 
-        response.setHeader("Content-type", contentType);
-        response.writeHead(200);
+        response.writeHead(200, {'Content-type': contentType});
         response.end(data);
     });
 });

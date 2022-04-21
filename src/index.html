@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tech task</title>
+    <title>Banks management page</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="styles/main.css" />
-    <link rel="stylesheet" href="styles/table.css" />
+    <link rel="stylesheet" href="./styles/main.css" />
+    <link rel="stylesheet" href="./styles/table.css" />
+    <link rel="stylesheet" href="./styles/modal-window.css" />
 </head>
 <body>
     <main>
@@ -18,21 +19,25 @@
         <div class="table">
             <div class="table-row th">
                 <div>#</div>
-                <div><span>Bank</span></div>
-                <div><span>Money 1</span></div>
-                <div><span>Money 2</span></div>
+                <div><span>Bank name</span></div>
+                <div><span>Interest rate</span></div>
+                <div><span>Max loan</span></div>
+                <div><span>Min down payment</span></div>
+                <div><span>Loan term</span></div>
                 <div class="edit-buttons">
                     <ul>
                         <li></li>
-                        <li></li>
+                        <li class="remove-all"></li>
                     </ul>
                 </div>
             </div>
             <div class="table-row">
                 <div>1</div>
-                <div><span>Bank name</span></div>
+                <div><span data-name="PNC Financial Services Group Inc.">PNC Financial Service...</span></div>
                 <div><span>Money 1</span></div>
                 <div><span>Money 2</span></div>
+                <div></div>
+                <div></div>
                 <div class="edit-buttons">
                     <ul>
                         <li></li>
@@ -45,6 +50,8 @@
                 <div>Bank name</div>
                 <div>Money 1</div>
                 <div>Money 2</div>
+                <div></div>
+                <div></div>
                 <div class="edit-buttons">
                     <ul>
                         <li></li>
@@ -54,6 +61,57 @@
             </div>
         </div>
     </main>
+    <div class="background"></div>
+    <div class="modal-window">
+        <form id="bankForm">
+            <div>
+                <label for="name">The name of bank</label>
+                <input id="name" name="name" type="text" value="" />
+            </div>
+            <div>
+                <div class="info-block">
+                    <label for="rate">Interest rate <i>(%)</i></label>
+                    <div>
+                        <span class="info" data-tooltip="The annual percentage rate that expresses the amount of money the bank charges additionally for the use of assets the person borrowed money for."></span>
+                    </div>
+                </div>
+                <input id="rate" name="interestRate" type="text" value="" />
+            </div>
+            <div>
+                <div class="info-block">
+                    <label for="loan">Maximum loan</label>
+                    <div>
+                        <span class="info" data-tooltip="The maximum amount of money a bank is able to borrow."></span>
+                    </div>
+                </div>
+                <input id="loan" name="maximumLoan" type="text" value="" />
+            </div>
+            <div>
+                <div class="info-block">
+                    <label for="down-payment">Minimum down payment</label>
+                    <div>
+                        <span class="info" data-tooltip="The amount of money a person needs to pay upfront."></span>
+                    </div>
+                </div>
+                <input id="down-payment" name="minimumDownPayment" type="text" value="" />
+            </div>
+            <div>
+                <div class="info-block">
+                    <label>Loan term <i>(month)</i></label>
+                    <div>
+                        <span class="info" data-tooltip="A period of time in which a person must pay off the loan."></span>
+                    </div>
+                </div>
+                <select id="term" name="loanTerm"></select>
+            </div>
+            <div class="modal-buttons">
+                <button class="add-btn">Add</button>
+                <button class="cancel-btn">Cancel</button>
+            </div>
+        </form>
+        <div id="tooltip"></div>
+    </div>
+    <script type="module" src="scripts/index.js"></script>
 </body>
 </head>
 </html>
