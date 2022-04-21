@@ -9,13 +9,13 @@ function writeStorage(data) {
     localStorage[storageName] = JSON.stringify(data);
 }
 
-function addBank(bank) {
+function addBankStorage(bank) {
     let data = [...storage(), bank];
     
     writeStorage(data);
 }
 
-function removeBank(index) {
+function removeBankStorage(index) {
     let data = storage();
     let id = data.findIndex(bank => bank.id === index);
     data.splice(id, 1);
@@ -23,7 +23,7 @@ function removeBank(index) {
     writeStorage(data);
 }
 
-function editBank(bank) {
+function editBankStorage(bank) {
     let data = storage();
     let id = bank.id;
     data[id] = bank;
@@ -31,4 +31,4 @@ function editBank(bank) {
     writeStorage(data);
 }
 
-export { storage, addBank, editBank, removeBank };
+export { storage, addBankStorage, editBankStorage, removeBankStorage };
