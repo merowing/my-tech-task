@@ -1,83 +1,128 @@
 import { infoImage } from "./images.js";
-import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage } from "./localstorage.js";
-import { addBankTable, clearTable, createTable, removeBankTable } from "./table.js";
+import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage } from "./localstorage.js";
+import { addBankTable, clearTable, createTable, editBankTable, removeBankTable } from "./table.js";
+import { table, calculator, form, errorMessage } from './blocks.js';
 import unique from "./unique.js";
+import { toggleModalWindow, splitNumber, clearModalWindowData, setModalWindowData } from './modalWindow.js';
+import errorsString from './errorMessage.js';
 
 createTable();
 
-const form = document.querySelector('#bankForm');
+const newBankButton = document.querySelector('.new-bank');
+newBankButton.addEventListener('click', function() {
+    clearModalWindowData();
+    
+    addButtonModal.setAttribute('edit', "0");
+    addButtonModal.innerText = 'Add';
+    
+    toggleModalWindow();
+});
+
+// form
+const loan = document.querySelector('#loan');
+const payment = document.querySelector('#down-payment');
+const rate = document.querySelector('#rate');
+const addButtonModal = document.querySelector('.add-btn');
+const closeButtonModal = document.querySelector('.cancel-btn');
 const inputs = form.querySelectorAll('input');
 
-const bg = document.querySelector('.background');
-const modal = document.querySelector('.modal-window');
-
-let state = false;
-
-let newBankButton = document.querySelector('.new-bank');
-newBankButton.addEventListener('click', function() {
-    toggleModalWindow();
-});
-
-let closeModalWindow = document.querySelector('.cancel-btn');
-closeModalWindow.addEventListener('click', function(e) {
-    e.preventDefault();
-
-    toggleModalWindow();
-});
-
-function toggleModalWindow() {
-    modal.classList.add('visible');
-    bg.classList.add('visible');
-    
-    if(state) {
-        modal.classList.remove('visible');
-        bg.classList.remove('visible');
+form.addEventListener('keydown', function(e) {
+    const target = e.target;
+    if(target.tagName === 'INPUT') {
+        target.classList.remove('empty');
+        errorMessage.innerText = '';
     }
+});
 
-    state = !state;
+rate.addEventListener('keyup', function() {
+    this.value = this.value.replace(',', '.');
+});
+
+loan.addEventListener('keyup', function() {
+    this.value = splitNumber(this);
+});
+
+payment.addEventListener('keyup', function(e) {
+    this.value = splitNumber(this);
+});
+
+function checkFormValue(num) {
+    if(num === '') return 'empty';
+    
+    num = +num;
+    if(num < 0) return 'negative';
+    if(isNaN(num)) return 'nan';
+    if(num === 0) return 'zero';
+    return false;
 }
 
-// add button
-const addButton = document.querySelector('.add-btn');
-addButton.addEventListener('click', function(e) {
+addButtonModal.addEventListener('click', function(e) {
     e.preventDefault();
     let bank = new FormData(form);
-    let errors = [];
+    const mode = this.getAttribute('edit');
 
+    let err = null;
+    let check;
+    let inputIndex;
     let formData = [...bank.entries()].reduce((prev, current, ind) => {
         let [key, value] = current;
-        if(key !== 'name' && value) {
-            let val = +value.replace(',', '');
-            prev[key] = val;
-            if(isNaN(val)) errors.push(ind);
+
+        if(key === 'name') {
+            check = (value === '') ? 'empty' : null;
+        }else if(key === 'loanTerm') {
+            if(!Number.isInteger(+value)) {
+                check = 'nonInteger';
+            }else {
+                check = checkFormValue(value);
+            }
         }else {
-            prev[key] = value || null;
+            value = value.replace(',', '');
+            check = checkFormValue(value);
         }
-        if(!value) errors.push(ind);
+        if(key === 'minimumDownPayment' && +loan.value.replace(',','') < +payment.value.replace(',','')) {
+            check = 'loanLess';
+        }
+
+        prev[key] = value;
+        
+        if(errorsString[check] && err === null) {
+            err = check;
+            inputIndex = ind;
+        }
 
         return prev;
     }, {});
 
-    if(errors.length) {
-        for(let i = 0; i < errors.length; i++) {
-            inputs[errors[i]].classList.add('empty');
-        }
+    if(err !== null) {
+        errorMessage.innerText = errorsString[err];
+
+        inputs[inputIndex].classList.add('empty');
+        inputs[inputIndex].focus();
+
         return false;
     }
 
-    formData['id'] = unique();
-    if(storage().length === 0) {
-        addBankStorage(formData);
-        createTable();
+    if(+mode) {
+        formData.id = +form.getAttribute('id');
+        editBankStorage(formData);
+
+        let ind = +form.getAttribute('rowId');
+        editBankTable(ind, formData);
     }else {
-        addBankTable(formData);
-        addBankStorage(formData);
+        formData['id'] = unique();
+        if(storage().length === 0) {
+            addBankStorage(formData);
+            createTable();
+        }else {
+            addBankStorage(formData);
+            addBankTable(formData);
+        }
+
     }
 
     toggleModalWindow();
 });
 
-// info image
 const info = document.querySelectorAll('.info');
 const tooltip = document.querySelector('#tooltip');
 
@@ -103,72 +148,46 @@ for(let i = 0; i < info.length; i++) {
     });
 }
 
-// form
-form.addEventListener('click', function(e) {
-    const target = e.target;
-    if(target.tagName === 'INPUT') {
-        target.classList.remove('empty');
-    }
+closeButtonModal.addEventListener('click', function(e) {
+    e.preventDefault();
+
+    toggleModalWindow();
 });
-
-const loan = document.querySelector('#loan');
-loan.addEventListener('keyup', function() {
-    splitNumber(this);
-});
-const payment = document.querySelector('#down-payment');
-payment.addEventListener('keyup', function(e) {
-    splitNumber(this);
-})
-
-function splitNumber(that) {
-    let num = that.value.replace(/,/g, '');
-    num = num.replace(/[^0-9]+/g, '');
-    that.value = num.split('').reverse().reduce((prev, current, index) => {
-        if(index % 3 === 0 && index !== 0) {
-            prev.push(',');
-        }
-        prev.push(current);
-        return prev;
-    }, []).reverse().join('');
-}
-
-const term = document.querySelector('#term');
-const monthTerm = [1, 2, 3, 4, 5, 6, 9, 12, 24, 36];
-const fragments = monthTerm.reduce((prev, current) => {
-    let option = document.createElement('option');
-    option.innerText = current;
-    option.value = current;
-    prev.appendChild(option);
-    
-    return prev;
-}, document.createDocumentFragment());
-
-term.appendChild(fragments);
 
 // table
 
-const table = document.querySelector('.table');
 table.addEventListener('click', function(e) {
     const editButtons = document.querySelectorAll('.edit-buttons');
     const rows = document.querySelectorAll('.table-row');
 
     const target = getRowElem(e.target, 'DIV');
-    const index = [...editButtons].indexOf(target);
+    const rowId = [...editButtons].indexOf(target);
     
-    if(index === -1) return;
+    if(rowId === -1) return;
+    
+    const bankId = rows[rowId].querySelector('div').getAttribute('id');
 
-    const id = rows[index].querySelector('div').getAttribute('id');
-    
     const targetLi = getRowElem(e.target, 'LI');
-    
-    const className = targetLi.getAttribute('class');
-    
+    const className = targetLi.getAttribute('type');
+
     switch(className) {
         case 'edit':
+            toggleModalWindow();
+            clearModalWindowData();
+            
+            const dataBank = getBankStorage(bankId);
+            setModalWindowData(dataBank);
+            
+            addButtonModal.setAttribute('edit', "1");
+            addButtonModal.innerText = 'Edit';
+            
+            form.setAttribute('id', bankId);
+            form.setAttribute('rowId', rowId);
+
             break;
         case 'remove':
-            removeBankStorage(id);
-            removeBankTable(index);
+            removeBankStorage(bankId);
+            removeBankTable(rowId);
             break;
         default:
             clearStorage();
@@ -183,3 +202,27 @@ function getRowElem(tag, name) {
     }
     return tag;
 }
+
+// navigation tabs
+
+let nav = document.querySelector('nav > ul');
+let tabs = nav.querySelectorAll('li');
+nav.addEventListener('click', function(e) {
+    let index = [...tabs].findIndex(el => el === e.target);
+
+    if(index !== tabs.length - 1) {
+        [...tabs].map(el => el.classList.remove('active'));
+        e.target.classList.add('active');
+
+        calculator.classList.add('hidden');
+        table.classList.add('hidden');
+
+        if(index === 0) {
+            table.classList.remove('hidden');
+        }
+        
+        if(index === 1) {
+            calculator.classList.remove('hidden');
+        }
+    }
+});

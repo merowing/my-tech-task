@@ -2,9 +2,10 @@ body {
     margin: 0;
 }
 main {
-    width: 900px;
+    max-width: 900px;
     margin: 0 auto;
     font-family: Arial;
+    padding: 10px 20px;
 }
 
 nav {

@@ -17,7 +17,7 @@ function addBankStorage(bank) {
 
 function removeBankStorage(index) {
     let data = storage();
-    let id = data.findIndex(bank => bank.id === index);
+    let id = data.findIndex(bank => bank.id === +index);
     data.splice(id, 1);
     
     writeStorage(data);
@@ -29,10 +29,14 @@ function clearStorage() {
 
 function editBankStorage(bank) {
     let data = storage();
-    let id = bank.id;
+    let id = data.findIndex(item => item.id === bank.id);
     data[id] = bank;
 
     writeStorage(data);
 }
 
-export { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage };
+function getBankStorage(id) {
+    return storage().filter(bank => bank.id === +id)[0];
+}
+
+export { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage };

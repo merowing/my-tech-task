@@ -2,6 +2,9 @@
     display: flex;
     flex-direction: column;
 }
+.table.hidden {
+    display: none;
+}
 .table-row {
     display: flex;
     justify-content: space-between;

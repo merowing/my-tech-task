@@ -14,8 +14,8 @@
     position: absolute;
     top: 40px;
     left: 50%;
-    margin-left: -200px;
-    width: 400px;
+    margin-left: -220px;
+    width: 440px;
     background-color: white;
     z-index: 2;
     border-radius: 4px;
@@ -42,7 +42,7 @@
 .modal-window form > div:first-child > * {
     width: 100%;
 }
-.modal-window form > div input,
+.modal-window form > div > input,
 .modal-window form > div select {
     box-sizing: border-box;
     padding: 2px 4px;

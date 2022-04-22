@@ -10,43 +10,33 @@ function addBankTable(data) {
 function removeBankTable(index) {
     let rows = table.querySelectorAll('.table-row');
     table.removeChild(rows[index]);
+
+    rows = table.querySelectorAll('.table-row');
+    for(let i = index; i < rows.length; i++) {
+        rows[i].querySelector('div').innerText = i + '.';
+    }
+
+    if(!storage().length) {
+        table.innerHTML = '';
+        createTableRows(storage());
+    }
 }
 
-function editBankTable(index) {
-
+function editBankTable(index, data) {
+    let rows = table.querySelectorAll('.table-row');
+    console.log(index, data);
+    let text = rows[index].querySelectorAll('div > span');
+    console.log(text);
+    Object.keys(data).map((item, index) => {
+        if(item !== 'id') {
+            text[index].innerText = data[item];
+        }
+    });
 }
 
 function clearTable() {
     table.innerHTML = '';
     createTableRows(storage());    
-}
-
-function tableNodeElements(data, classStr = '') {
-    let fragment = document.createDocumentFragment();
-    let rows = data.reduce((prev, current, ind) => {
-        
-        let div = document.createElement('div');
-        div.setAttribute('class', 'table-row' + classStr);
-
-        let arrDiv = Object.keys(current).map(item => {
-            return `<div><span>${current[item]}</span></div>`;
-        });
-
-        div.innerHTML = `
-            <div>${ind + 1}.</div>
-            ${arrDiv.join('')}
-            <div class="edit-buttons">
-                <ul>
-                    <li></li>
-                    <li class="remove-all"></li>
-                </ul>
-            </div>`;
-
-        prev.appendChild(div);
-        return prev;
-    }, fragment);
-
-    return rows;
 }
 
 function createTableHead() {
@@ -63,7 +53,7 @@ function createTableHead() {
         ${head.join('')}
         <div class="edit-buttons">
             <ul>
-                <li class="remove-all" title="remove all banks">${ removeImage }</li>
+                <li class="remove-all" type="remove-all" title="remove all banks">${ removeImage }</li>
             </ul>
         </div>`;
     
@@ -71,10 +61,10 @@ function createTableHead() {
 }
 
 function createTableRows(data) {
-    console.log(data);
     let fragment = document.createDocumentFragment();
-    let rows = data.reduce((prev, current) => {
-        
+    
+    let rows = data.reduce((prev, current, ind) => {
+
         let div = document.createElement('div');
         div.setAttribute('class', 'table-row');
         
@@ -85,13 +75,16 @@ function createTableRows(data) {
             return prev;
         }, []);
 
+        let bankNumber = ind + 1;
+        if(data.length === 1) bankNumber = storage().length;
+
         div.innerHTML = `
-            <div id="${current['id']}">${current['id'] + 1}.</div>
+            <div id="${current['id']}">${bankNumber}.</div>
             ${arrDiv.join('')}
             <div class="edit-buttons">
                 <ul>
-                    <li class="edit" title="edit">${ editImage }</li>
-                    <li class="remove" title="remove">${ removeImage }</li>
+                    <li class="edit" type="edit" title="edit">${ editImage }</li>
+                    <li class="remove" type="remove" title="remove">${ removeImage }</li>
                 </ul>
             </div>`;
 
