@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const childp = require('child_process');
 
-const host = 'localhost';
+const host = '0.0.0.0';
 const port = process.env.PORT || 3000;
 
 let start = 'start';
