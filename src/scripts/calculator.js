@@ -119,7 +119,9 @@ function calculateErrors() {
     
     errorBlock.innerText = ''
     errorBlock.classList.add('hidden');
-    
+
+    if(isNaN(id)) return false;
+
     let errors = [...formInputs].map((input, ind) => {
         let nameAttr = input.getAttribute('name');
         if(nameAttr !== 'interestRate') {

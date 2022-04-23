@@ -30,6 +30,7 @@
     flex-direction: column;
     text-align: center;
     row-gap: 10px;
+    width: 20%;
 }
 .information > div > span:last-child {
     font-weight: 700;
