@@ -3,7 +3,7 @@ const fs = require('fs');
 const childp = require('child_process');
 
 const host = 'localhost';
-const port = '3000';
+const port = process.env.PORT || 3000;
 
 let start = 'start';
 switch(process.platform) {
