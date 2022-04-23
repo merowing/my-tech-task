@@ -1,3 +1,5 @@
+import defaultBanks from "./defaultBanks.js";
+
 const storageName = 'banks';
 
 function storage() {
@@ -10,7 +12,7 @@ function writeStorage(data) {
 }
 
 function addBankStorage(bank) {
-    let data = [...storage(), bank];
+    const data = [...storage(), bank];
     
     writeStorage(data);
 }
@@ -39,4 +41,10 @@ function getBankStorage(id) {
     return storage().filter(bank => bank.id === +id)[0];
 }
 
-export { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage };
+function fillEmptyStorage() {
+    if(!storage().length) {
+        defaultBanks.map(data => addBankStorage(data));        
+    }
+}
+
+export { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage, fillEmptyStorage };

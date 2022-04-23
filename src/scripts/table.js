@@ -11,10 +11,10 @@ function removeBankTable(index) {
     table.removeChild(rows[index]);
 
     rows = table.querySelectorAll('.table-row');
-    for(let i = index; i < rows.length; i++) {
-        rows[i].querySelector('div').innerText = i + '.';
+    
+    if(index !== rows.length) {
+        [...rows].map((row, i) => row.querySelector('div').innerText = i + '.');
     }
-
     if(!storage().length) {
         table.innerHTML = '';
         createTableRows(storage());
@@ -96,6 +96,7 @@ function createTableRows(data) {
             </div>`;
 
         prev.appendChild(div);
+        
         return prev;
     }, fragment);
 

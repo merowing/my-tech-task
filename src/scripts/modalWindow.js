@@ -3,18 +3,15 @@ import { form, errorMessage } from './blocks.js';
 const bg = document.querySelector('.background');
 const modal = document.querySelector('.modal-window');
 
-let state = false;
-
 function toggleModalWindow() {
-    modal.classList.add('visible');
-    bg.classList.add('visible');
-    
-    if(state) {
+    if(!modal.classList.contains('visible')) {
+        modal.classList.add('visible');
+        bg.classList.add('visible');
+    }else {
         modal.classList.remove('visible');
         bg.classList.remove('visible');
     }
 
-    state = !state;
     form.removeAttribute('id');
     form.removeAttribute('index');
     form.querySelector('input').focus();
@@ -38,7 +35,6 @@ function setModalWindowData(data) {
         }
     });
 }
-
 
 function splitNumber(num) {
     return num.replace(/^\s+|\s+$/g, '').split('').reverse().reduce((prev, current, index) => {

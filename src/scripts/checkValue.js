@@ -21,7 +21,7 @@ let checkValue = {
         return this;
     },
     nan() {
-        if(isNaN(this.val)) {
+        if(isNaN(this.val) || /^0+[0-9]+/.test(this.val)) {
             this.error = errorsString['nan'];
         }
         return this;

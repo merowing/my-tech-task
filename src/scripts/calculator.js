@@ -7,7 +7,6 @@ const formCalculator = document.querySelector('#formCalculator');
 const information = document.querySelector('.information');
 const formInputs = formCalculator.querySelectorAll('input');
     
-//const banks = storage();
 calculate();
 
 // fill select
@@ -31,6 +30,27 @@ function selectFillListOfBanks() {
     
     clearfillData();
 }
+function selectAddOption(id) {
+    let data = getBankStorage(id);
+    let option = document.createElement('option');
+    option.value = data.id;
+    option.innerText = data.name;
+    
+    selectBank.appendChild(option);
+}
+function selectRemoveOption(id) {
+    let opts = selectBank.querySelectorAll('option');
+    let opt = [...opts].filter(item => +item.value === +id)[0];
+    let ind = [...selectBank].findIndex(item => +item.value === +id);
+    
+    let selIndex = selectBank.selectedIndex;
+    if(+opts[selIndex].value === +id) {
+        selectBank.selectedIndex = ind - 1;
+    }
+    opt.parentNode.removeChild(opt);
+
+    selectBank.dispatchEvent(new Event('change'));
+}
 
 selectBank.addEventListener('change', function() {
     let id = +this.value;
@@ -49,6 +69,12 @@ function fillData(data) {
         if(field && key !== 'interestRate') {
             const text = field.nextElementSibling.innerText.split(' ')[0];
             field.nextElementSibling.innerText = text + ' ' + data[key];
+            
+            field.value = splitNumber(data[key]);
+            if(key === 'loanTerm') {
+                let pre = (data[key] > 1) ? ' months' : ' month';
+                field.value = data[key] + pre;
+            }
         }
         if(key === 'interestRate') {
             field.value = data[key] + '%';
@@ -65,8 +91,11 @@ function clearfillData() {
         }
     });
 
-    formCalculator.querySelector(`input[name]`).value = 0;
-    
+    [...formCalculator.querySelectorAll(`input[name]`)].map(el => {
+        el.value = 0;
+    });
+
+    information.innerHTML = '';
     calculate();
 }
 
@@ -74,25 +103,67 @@ const errorBlock = document.querySelector('.calculator-error');
     
 formCalculator.addEventListener('keyup', function(e) {
     const val = e.target.value.replace(/,/g, '');
-    const elem = [...formInputs].filter(item => item === e.target);
+    const elem = [...formInputs].filter(item => item === e.target)[0];
+    const elemName = elem.getAttribute('name');
+    
+    let id = +selectBank.value;
+    
+    if(isNaN(id)) return false;
+    
+    if(e.target.getAttribute('name') !== 'loanTerm') e.target.value = splitNumber(val);
+    
+    errorBlock.innerText = ''
+    errorBlock.classList.add('hidden');
+    
+    let errors = [...formInputs].map(input => {
+        let nameAttr = input.getAttribute('name');
+        if(nameAttr !== 'interestRate') {
+            let inputVal = input.value;
+            
+            if(nameAttr === 'loanTerm' &&
+                inputVal.indexOf('month') >= 0) {
+                    inputVal = inputVal.split(' ')[0];
+            }else {
+                inputVal = inputVal.replace(/,/g, '');
+            }
+            let err = checkValue.set(inputVal)
+                        .nan()
+                        .negative()
+                        .getMessage();
+            
+            if(nameAttr === 'maximumLoan') {
+                err = checkValue.loanLess(formInputs[1].value.replace(/,/g, ''), formInputs[2].value.replace(/,/g, '')).getMessage();
+            
+                if(+formInputs[1].value.replace(/,/g, '') > getBankStorage(id).maximumLoan) {
+                    err = 'value more than bank allows';
+                }
 
-    e.target.value = splitNumber(val);
+            }
 
-    if(isNaN(val)) {
+            if(nameAttr === 'minimumDownPayment') {
+                let paymentNum = +formInputs[2].value.replace(/,/g, '');
+                if(paymentNum < getBankStorage(id).minimumDownPayment && paymentNum !== 0) {
+                    err = 'value less than bank allows';
+                }
+            }
+
+            if(nameAttr === 'loanTerm') {
+                let termNum = +formInputs[3].value.match(/[0-9]+/)[0];
+                if(termNum > getBankStorage(id).loanTerm && termNum > 0) {
+                    err = 'bank doesn\'t allow to take for a longer period';
+                }
+            }
+
+            if(err)
+                return `<strong>${nameAttr}</strong>: ${err}`;
+        }
+    }).filter(item => item);
+    console.log(errors);
+
+    if(!errors.length) calculate();
+    else {
         errorBlock.classList.remove('hidden');
-        errorBlock.innerText = errorsString['nan'];
-        errorArr.push(elem);
-    }
-
-    const index = errorArr.indexOf(elem);
-    if(index >= 0 && !isNaN(val)) {
-        alert(index);
-        errorArr.splice(index, 1);
-    }
-
-    if(!errorArr.length) {
-        errorBlock.classList.add('hidden');
-        calculate();
+        errorBlock.innerHTML = errors.join('<br>');
     }
 });
 
@@ -102,7 +173,7 @@ formCalculator.addEventListener('click', function(e) {
         tag.value = '';
     }
 
-    if(tag.value !== '0' && tag.getAttribute('name') === 'loanTerm') {
+    if(tag.value !== '0' && tag.getAttribute('name') === 'loanTerm' && parseInt(tag.value) > 0) {
         let num = tag.value.match(/[0-9]+/)[0];
         tag.value = '';
         tag.value = num;
@@ -117,7 +188,7 @@ function returnZero(event) {
             calculate();
         }
         
-        if(el.value !== '0' && el.value !== '' && el.getAttribute('name') === 'loanTerm') {
+        if(el.value !== '0' && el.value !== '' && el.getAttribute('name') === 'loanTerm' && !isNaN(el.value) && +el.value > 0) {
             let num = el.value.match(/[0-9]+/)[0];
             let str = (num > 1) ? num + ' months' : num + ' month';
             el.value = '';
@@ -130,24 +201,18 @@ document.body.addEventListener('click', e => returnZero(e));
 function calculate() {
     let formData = new FormData(formCalculator);
 
-    //console.log([...formData.entries()]);
-
     const { maximumLoan, minimumDownPayment, interestRate, loanTerm } = [...formData.entries()].reduce((prev, current) => {
         let [key, value] = current;
         prev[key] = parseInt(value.replace(/,/g, '')) || 0;
         return prev;
     }, {});
 
-    console.log(maximumLoan, interestRate, loanTerm, minimumDownPayment);
-
-    //let a = (1 + (interestRate / 100 / 12)) ** loanTerm;
     const top = (maximumLoan - minimumDownPayment) * (interestRate / 100 / 12 ) * ((1 + (interestRate / 100 / 12)) ** loanTerm);
     const bottom = ((1 + (interestRate / 100 / 12)) ** loanTerm) - 1;
 
     const monthlyPayment = top / bottom;
 
     information.innerText = '';
-    //if(!isNaN(monthlyPayment) && isFinite(monthlyPayment)) {
         
         const money = [];
         money[0] = { name: 'Total monthly payment', val: monthlyPayment.toFixed(2) };
@@ -155,7 +220,6 @@ function calculate() {
         money[2] = { name: 'Total payments', val: (monthlyPayment * loanTerm).toFixed(2) };
         money[3] = { name: 'Total interest paid', val: ((monthlyPayment * loanTerm) - maximumLoan + minimumDownPayment).toFixed(2) };
         
-
         const moneyFragment = money.reduce((prev, current) => {
             let { name, val } = current;
             
@@ -176,8 +240,7 @@ function calculate() {
         }, document.createDocumentFragment());
 
         information.appendChild(moneyFragment);
-    //}
 
 }
 
-export default selectFillListOfBanks;
+export { selectFillListOfBanks, selectAddOption, selectRemoveOption };

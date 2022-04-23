@@ -1,11 +1,14 @@
 import { infoImage } from "./images.js";
-import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage } from "./localstorage.js";
+import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage, fillEmptyStorage } from "./localstorage.js";
 import { addBankTable, clearTable, createTable, editBankTable, removeBankTable, shorterBankName } from "./table.js";
 import { table, calculator, form, errorMessage } from './blocks.js';
 import { toggleModalWindow, splitNumber, clearModalWindowData, setModalWindowData } from './modalWindow.js';
 import checkValue from "./checkValue.js";
 import unique from "./unique.js";
-import selectFillListOfBanks from "./calculator.js";
+import { selectFillListOfBanks, selectAddOption, selectRemoveOption } from "./calculator.js";
+
+fillEmptyStorage();
+selectFillListOfBanks();
 
 createTable();
 
@@ -66,7 +69,6 @@ addButtonModal.addEventListener('click', function(e) {
 
         switch(key) {
             case 'name':
-                //alert(form.getAttribute('id'));
                 let changeName = storage().some(item => item.name === value);
                 if(typeof form.getAttribute('id') !== 'object') {
                     changeName = storage().some(item => {
@@ -133,8 +135,9 @@ addButtonModal.addEventListener('click', function(e) {
             addBankStorage(formData);
             addBankTable(formData);
         }
+
+        selectAddOption(formData.id);
     }
-    selectFillListOfBanks();
 
     toggleModalWindow();
 });
@@ -210,7 +213,7 @@ table.addEventListener('click', function(e) {
             removeBankStorage(bankId);
             removeBankTable(rowId);
             
-            selectFillListOfBanks();
+            selectRemoveOption(bankId);
             break;
         default:
             clearStorage();
@@ -253,7 +256,7 @@ let tabs = nav.querySelectorAll('li');
 nav.addEventListener('click', function(e) {
     let index = [...tabs].findIndex(el => el === e.target);
 
-    if(index !== tabs.length - 1) {
+    if(index !== tabs.length - 1 && index !== -1) {
         [...tabs].map(el => el.classList.remove('active'));
         e.target.classList.add('active');
 

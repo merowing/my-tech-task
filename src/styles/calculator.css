@@ -80,8 +80,11 @@
 
 .calculator-error {
     padding: 20px 0;
-    color: red;
     text-align: center;
+    font-style: italic;
+}
+.calculator-error strong {
+    color: red;
 }
 .calculator-error.hidden {
     display: none;
