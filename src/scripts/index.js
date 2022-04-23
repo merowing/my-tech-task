@@ -5,7 +5,7 @@ import { table, calculator, form, errorMessage } from './blocks.js';
 import { toggleModalWindow, splitNumber, clearModalWindowData, setModalWindowData } from './modalWindow.js';
 import checkValue from "./checkValue.js";
 import unique from "./unique.js";
-import { selectFillListOfBanks, selectAddOption, selectRemoveOption } from "./calculator.js";
+import { selectFillListOfBanks, selectAddOption, selectRemoveOption, selectEditOption } from "./calculator.js";
 
 fillEmptyStorage();
 selectFillListOfBanks();
@@ -126,6 +126,8 @@ addButtonModal.addEventListener('click', function(e) {
 
         let ind = +form.getAttribute('rowId');
         editBankTable(ind, formData);
+
+        selectEditOption();
     }else {
         formData['id'] = unique();
         if(storage().length === 0) {
@@ -188,7 +190,6 @@ table.addEventListener('click', function(e) {
         toggleBankFullName(rowId, rows);
         return;
     }
-
     const bankId = rows[rowId].querySelector('div').getAttribute('id');
 
     const targetLi = getRowElem(e.target, 'LI');
@@ -201,7 +202,7 @@ table.addEventListener('click', function(e) {
             
             const dataBank = getBankStorage(bankId);
             setModalWindowData(dataBank);
-            
+                   
             addButtonModal.setAttribute('edit', "1");
             addButtonModal.innerText = 'Edit';
             
@@ -235,15 +236,16 @@ function getRowElem(tag, name, clss = false) {
 
 function toggleBankFullName(rowId, rows) {
     const row = rows[rowId];
-    console.log(row);
-
+    
     const rowSpan = row.querySelector('div span');
     const name = rowSpan.getAttribute('name');
 
     if(row.classList.contains('full-name')) {
         row.classList.remove('full-name');
     }
-    if(name.length > rowSpan.innerText.length) row.classList.add('full-name');
+    if(name.length > rowSpan.innerText.length) {
+        row.classList.add('full-name');
+    }
 
     rowSpan.setAttribute('name', rowSpan.innerText);
     rowSpan.innerText = name;

@@ -51,6 +51,9 @@ function selectRemoveOption(id) {
 
     selectBank.dispatchEvent(new Event('change'));
 }
+function selectEditOption() {
+    selectBank.dispatchEvent(new Event('change'));
+}
 
 selectBank.addEventListener('change', function() {
     let id = +this.value;
@@ -246,4 +249,4 @@ function calculate() {
 
 }
 
-export { selectFillListOfBanks, selectAddOption, selectRemoveOption };
+export { selectFillListOfBanks, selectAddOption, selectRemoveOption, selectEditOption };

@@ -31,7 +31,9 @@ function setModalWindowData(data) {
         if(key !== 'id') {
             let item = form.querySelector(`[name="${key}"]`);
             item.value = data[key];
-            if(ind === 2 || ind === 3) item.value = splitNumber(item.value.replace(/,/g, ''));
+            if(key === 'maximumLoan' || key === 'minimumDownPayment') {
+                item.value = splitNumber(item.value.replace(/,/g, ''));
+            }
         }
     });
 }
