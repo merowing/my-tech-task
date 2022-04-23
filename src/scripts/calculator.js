@@ -60,6 +60,8 @@ selectBank.addEventListener('change', function() {
     }else {
         clearfillData();
     }
+
+    calculateErrors();
     calculate();
 });
 
@@ -69,12 +71,6 @@ function fillData(data) {
         if(field && key !== 'interestRate') {
             const text = field.nextElementSibling.innerText.split(' ')[0];
             field.nextElementSibling.innerText = text + ' ' + data[key];
-            
-            field.value = splitNumber(data[key]);
-            if(key === 'loanTerm') {
-                let pre = (data[key] > 1) ? ' months' : ' month';
-                field.value = data[key] + pre;
-            }
         }
         if(key === 'interestRate') {
             field.value = data[key] + '%';
@@ -112,10 +108,16 @@ formCalculator.addEventListener('keyup', function(e) {
     
     if(e.target.getAttribute('name') !== 'loanTerm') e.target.value = splitNumber(val);
     
+    calculateErrors();
+});
+
+function calculateErrors() {
+    let id = +selectBank.value;
+    
     errorBlock.innerText = ''
     errorBlock.classList.add('hidden');
     
-    let errors = [...formInputs].map(input => {
+    let errors = [...formInputs].map((input, ind) => {
         let nameAttr = input.getAttribute('name');
         if(nameAttr !== 'interestRate') {
             let inputVal = input.value;
@@ -154,18 +156,19 @@ formCalculator.addEventListener('keyup', function(e) {
                 }
             }
 
-            if(err)
-                return `<strong>${nameAttr}</strong>: ${err}`;
+            if(err) {
+                const paramName = document.querySelectorAll('.data > div span')[ind].innerText;
+                return `<strong>${paramName}</strong>: ${err}`;
+            }
         }
     }).filter(item => item);
-    console.log(errors);
 
     if(!errors.length) calculate();
     else {
         errorBlock.classList.remove('hidden');
         errorBlock.innerHTML = errors.join('<br>');
     }
-});
+}
 
 formCalculator.addEventListener('click', function(e) {
     let tag = e.target;
