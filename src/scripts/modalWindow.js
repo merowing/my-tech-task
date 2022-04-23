@@ -34,15 +34,16 @@ function setModalWindowData(data) {
         if(key !== 'id') {
             let item = form.querySelector(`[name="${key}"]`);
             item.value = data[key];
-            if(ind === 2 || ind === 3) splitNumber(item);
+            if(ind === 2 || ind === 3) item.value = splitNumber(item.value.replace(/,/g, ''));
         }
     });
 }
 
 
-function splitNumber(that) {
-    let num = that.value.replace(/,/g, '');
-    return num.split('').reverse().reduce((prev, current, index) => {
+function splitNumber(num) {
+    if(parseInt(num) === 0) return 0;
+
+    return num.replace(/^\s+|\s+$/g, '').split('').reverse().reduce((prev, current, index) => {
         if(index % 3 === 0 && index !== 0) {
             prev.push(',');
         }

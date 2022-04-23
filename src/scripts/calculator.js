@@ -1,10 +1,14 @@
+import errorsString from "./errorMessage.js";
 import { storage, getBankStorage } from "./localstorage.js";
+import { splitNumber } from "./modalWindow.js";
 
 const calculator = document.querySelector('.calculator');
 const formCalculator = document.querySelector('#formCalculator');
 const information = document.querySelector('.information');
-
+const formInputs = formCalculator.querySelectorAll('input');
+    
 const banks = storage();
+calculate();
 
 // fill select
 const selectBank = calculator.querySelector('.select-bank > select');
@@ -24,10 +28,10 @@ selectBank.addEventListener('change', function() {
     let data = getBankStorage(id);
     if(data) {
         fillData(data);
-        calculate();
     }else {
         clearfillData();
     }
+    calculate();
 });
 
 function fillData(data) {
@@ -56,8 +60,32 @@ function clearfillData() {
     information.innerText = '';
 }
 
-formCalculator.addEventListener('keyup', function() {
-    calculate();
+const errorArr = [];
+    
+formCalculator.addEventListener('keyup', function(e) {
+    const val = e.target.value.replace(/,/g, '');
+    const elem = [...formInputs].filter(item => item === e.target);
+
+    e.target.value = splitNumber(val);
+
+    const errorBlock = document.querySelector('.calculator-error');
+    
+    if(isNaN(val)) {
+        errorBlock.classList.remove('hidden');
+        errorBlock.innerText = errorsString['nan'];
+        errorArr.push(elem);
+    }
+
+    const index = errorArr.indexOf(elem);
+    if(index >= 0 && !isNaN(val)) {
+        alert(index);
+        errorArr.splice(index, 1);
+    }
+
+    if(!errorArr.length) {
+        errorBlock.classList.add('hidden');
+        calculate();
+    }
 });
 
 formCalculator.addEventListener('click', function(e) {
@@ -65,11 +93,28 @@ formCalculator.addEventListener('click', function(e) {
     if(tag.tagName === 'INPUT' && tag.value === '0') {
         tag.value = '';
     }
+
+    if(tag.value !== '0' && tag.getAttribute('name') === 'loanTerm') {
+        let num = tag.value.match(/[0-9]+/)[0];
+        tag.value = '';
+        tag.value = num;
+        e.stopPropagation();
+    }
+
 });
 function returnZero(event) {
-    let formInputs = formCalculator.querySelectorAll('input');
     [...formInputs].map(el => {
-        if(el.value === '' && event.target !== el) el.value = 0;
+        if(el.value === '' && event.target !== el) {
+            el.value = 0;
+            calculate();
+        }
+        
+        if(el.value !== '0' && el.value !== '' && el.getAttribute('name') === 'loanTerm') {
+            let num = el.value.match(/[0-9]+/)[0];
+            let str = (num > 1) ? num + ' months' : num + ' month';
+            el.value = '';
+            el.value = str;
+        }
     });
 }
 document.body.addEventListener('click', e => returnZero(e));
@@ -77,11 +122,11 @@ document.body.addEventListener('click', e => returnZero(e));
 function calculate() {
     let formData = new FormData(formCalculator);
 
-    console.log([...formData.entries()]);
+    //console.log([...formData.entries()]);
 
     const { maximumLoan, minimumDownPayment, interestRate, loanTerm } = [...formData.entries()].reduce((prev, current) => {
         let [key, value] = current;
-        prev[key] = parseInt(value);
+        prev[key] = parseInt(value.replace(/,/g, '')) || 0;
         return prev;
     }, {});
 
@@ -93,16 +138,36 @@ function calculate() {
 
     const monthlyPayment = top / bottom;
 
-    information.innerText = 'Monthly principal: ' + 0;
-    if(!isNaN(monthlyPayment) && isFinite(monthlyPayment)) {
+    information.innerText = '';
+    //if(!isNaN(monthlyPayment) && isFinite(monthlyPayment)) {
         
         const money = [];
         money[0] = { name: 'Total monthly payment', val: monthlyPayment.toFixed(2) };
         money[1] = { name:'Annual payment', val: (monthlyPayment * 12).toFixed(2) };
         money[2] = { name: 'Total payments', val: (monthlyPayment * loanTerm).toFixed(2) };
-        money[3] = { name: 'Total interest paid', val: ((monthlyPayment * loanTerm) - maximumLoan - minimumDownPayment).toFixed(2) };
+        money[3] = { name: 'Total interest paid', val: ((monthlyPayment * loanTerm) - maximumLoan + minimumDownPayment).toFixed(2) };
         
-        
-    }
+
+        const moneyFragment = money.reduce((prev, current) => {
+            let { name, val } = current;
+            
+            if(!isNaN(val) && isFinite(val)) {
+                let valString = val.toString().split('.');
+                val = splitNumber(valString[0]) + '.' + valString[1];
+            }else {
+                val = 0;
+            }
+
+            let div = document.createElement('div');
+            div.innerHTML = `
+                <span>${name}</span>
+                <span>${val}</span>
+            `;
+            prev.appendChild(div);
+            return prev;
+        }, document.createDocumentFragment());
+
+        information.appendChild(moneyFragment);
+    //}
 
 }

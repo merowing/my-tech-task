@@ -57,6 +57,9 @@
 .modal-window div.modal-buttons {
     background-color: white;
     justify-content: space-between;
+    height: 54px;
+    padding: 0 20px;
+    text-align: center;
 }
 div.modal-buttons > button {
     padding: 8px 18px;

@@ -2,9 +2,9 @@ import { infoImage } from "./images.js";
 import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage } from "./localstorage.js";
 import { addBankTable, clearTable, createTable, editBankTable, removeBankTable } from "./table.js";
 import { table, calculator, form, errorMessage } from './blocks.js';
-import unique from "./unique.js";
 import { toggleModalWindow, splitNumber, clearModalWindowData, setModalWindowData } from './modalWindow.js';
-import errorsString from './errorMessage.js';
+import checkValue from "./checkValue.js";
+import unique from "./unique.js";
 
 createTable();
 
@@ -34,68 +34,82 @@ form.addEventListener('keydown', function(e) {
     }
 });
 
+let changeName = false;
+const bankNameInput = form.querySelector('#name');
+bankNameInput.addEventListener('keydown', function() {
+    changeName = true;
+});
+
 rate.addEventListener('keyup', function() {
     this.value = this.value.replace(',', '.');
 });
 
 loan.addEventListener('keyup', function() {
-    this.value = splitNumber(this);
+    let num = this.value.replace(/,/g, '');
+    this.value = splitNumber(num);
 });
 
 payment.addEventListener('keyup', function(e) {
-    this.value = splitNumber(this);
+    let num = this.value.replace(/,/g, '');
+    this.value = splitNumber(num);
 });
-
-function checkFormValue(num) {
-    if(num === '') return 'empty';
-    
-    num = +num;
-    if(num < 0) return 'negative';
-    if(isNaN(num)) return 'nan';
-    if(num === 0) return 'zero';
-    return false;
-}
 
 addButtonModal.addEventListener('click', function(e) {
     e.preventDefault();
     let bank = new FormData(form);
     const mode = this.getAttribute('edit');
 
-    let err = null;
-    let check;
-    let inputIndex;
+    [...inputs].map(item => {
+        item.classList.remove('empty');
+        item.value = item.value.replace(/^\s+|\s+$/g, '');
+    });
+    let err = '';
+    let errors = [];
+
     let formData = [...bank.entries()].reduce((prev, current, ind) => {
         let [key, value] = current;
 
-        if(key === 'name') {
-            check = (value === '') ? 'empty' : null;
-        }else if(key === 'loanTerm') {
-            if(!Number.isInteger(+value)) {
-                check = 'nonInteger';
-            }else {
-                check = checkFormValue(value);
-            }
-        }else {
-            value = value.replace(',', '');
-            check = checkFormValue(value);
+        switch(key) {
+            case 'name':
+                err = checkValue.set(value).empty();
+                if(!+mode || changeName) err = err.bankPresent();
+                break;
+            case 'minimumDownPayment':
+                value = value.replace(/,/g, '');
+                err = checkValue.set(value)
+                    .loanLess(loan.value.replace(/,/g,''), payment.value.replace(/,/g, ''));
+                break;
+            case 'loanTerm':
+                err = checkValue.set(value).integer();
+                break;
+            default:
+                value = value.replace(/,/g, '');
+                err = checkValue.set(value);
         }
-        if(key === 'minimumDownPayment' && +loan.value.replace(',','') < +payment.value.replace(',','')) {
-            check = 'loanLess';
+
+        if(key !== 'name') {
+            err = err
+                .zero()
+                .empty()
+                .nan()
+                .negative();
+        }
+        
+        err = err.getMessage();
+
+        if(err && !errors.length) {
+            errors = [ind, err];
         }
 
         prev[key] = value;
-        
-        if(errorsString[check] && err === null) {
-            err = check;
-            inputIndex = ind;
-        }
 
         return prev;
     }, {});
+    
+    if(errors.length) {
+        errorMessage.innerText = errors[1];
 
-    if(err !== null) {
-        errorMessage.innerText = errorsString[err];
-
+        const inputIndex = errors[0];
         inputs[inputIndex].classList.add('empty');
         inputs[inputIndex].focus();
 
@@ -164,7 +178,7 @@ table.addEventListener('click', function(e) {
     const rowId = [...editButtons].indexOf(target);
     
     if(rowId === -1) return;
-    
+
     const bankId = rows[rowId].querySelector('div').getAttribute('id');
 
     const targetLi = getRowElem(e.target, 'LI');
