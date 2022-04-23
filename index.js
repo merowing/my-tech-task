@@ -30,9 +30,7 @@ const server = http.createServer((request, response) => {
         contentType = `text/${types[fileExtension]}`;
     }
     
-    //console.log(pathToFile, fileExtension);
     fs.readFile(__dirname + pathToFile, (error, data) => {
-        console.log(error);
         if(error) {
             response.writeHead(404, {'Content-type': 'text/plain'});
             return response.end(`File ${pathToFile} not found!`);
