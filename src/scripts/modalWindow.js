@@ -41,8 +41,6 @@ function setModalWindowData(data) {
 
 
 function splitNumber(num) {
-    if(parseInt(num) === 0) return 0;
-
     return num.replace(/^\s+|\s+$/g, '').split('').reverse().reduce((prev, current, index) => {
         if(index % 3 === 0 && index !== 0) {
             prev.push(',');

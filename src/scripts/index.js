@@ -1,10 +1,11 @@
 import { infoImage } from "./images.js";
 import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage } from "./localstorage.js";
-import { addBankTable, clearTable, createTable, editBankTable, removeBankTable } from "./table.js";
+import { addBankTable, clearTable, createTable, editBankTable, removeBankTable, shorterBankName } from "./table.js";
 import { table, calculator, form, errorMessage } from './blocks.js';
 import { toggleModalWindow, splitNumber, clearModalWindowData, setModalWindowData } from './modalWindow.js';
 import checkValue from "./checkValue.js";
 import unique from "./unique.js";
+import selectFillListOfBanks from "./calculator.js";
 
 createTable();
 
@@ -32,12 +33,6 @@ form.addEventListener('keydown', function(e) {
         target.classList.remove('empty');
         errorMessage.innerText = '';
     }
-});
-
-let changeName = false;
-const bankNameInput = form.querySelector('#name');
-bankNameInput.addEventListener('keydown', function() {
-    changeName = true;
 });
 
 rate.addEventListener('keyup', function() {
@@ -71,8 +66,15 @@ addButtonModal.addEventListener('click', function(e) {
 
         switch(key) {
             case 'name':
+                //alert(form.getAttribute('id'));
+                let changeName = storage().some(item => item.name === value);
+                if(typeof form.getAttribute('id') !== 'object') {
+                    changeName = storage().some(item => {
+                        return item.name === value && item.id !== +form.getAttribute('id')
+                    });
+                }
                 err = checkValue.set(value).empty();
-                if(!+mode || changeName) err = err.bankPresent();
+                if(changeName) err = err.bankPresent();
                 break;
             case 'minimumDownPayment':
                 value = value.replace(/,/g, '');
@@ -131,8 +133,8 @@ addButtonModal.addEventListener('click', function(e) {
             addBankStorage(formData);
             addBankTable(formData);
         }
-
     }
+    selectFillListOfBanks();
 
     toggleModalWindow();
 });
@@ -175,9 +177,14 @@ table.addEventListener('click', function(e) {
     const rows = document.querySelectorAll('.table-row');
 
     const target = getRowElem(e.target, 'DIV');
-    const rowId = [...editButtons].indexOf(target);
+    let rowId = [...editButtons].indexOf(target);
     
-    if(rowId === -1) return;
+    if(rowId === -1) {
+        if(e.target === table) return; 
+        rowId = [...rows].indexOf(getRowElem(e.target, 'DIV', 'table-row'));
+        toggleBankFullName(rowId, rows);
+        return;
+    }
 
     const bankId = rows[rowId].querySelector('div').getAttribute('id');
 
@@ -202,19 +209,41 @@ table.addEventListener('click', function(e) {
         case 'remove':
             removeBankStorage(bankId);
             removeBankTable(rowId);
+            
+            selectFillListOfBanks();
             break;
         default:
             clearStorage();
             clearTable();
+            selectFillListOfBanks();
     }
-
+    
 });
 
-function getRowElem(tag, name) {
-    if(tag.tagName !== name) {
+function getRowElem(tag, name, clss = false) {
+    if(tag.tagName !== name && typeof clss !== 'string') {
         return getRowElem(tag.parentNode, name);
+    }else if(!tag.classList.contains(clss) && typeof clss === 'string') {
+        return getRowElem(tag.parentNode, name, clss);
     }
+
     return tag;
+}
+
+function toggleBankFullName(rowId, rows) {
+    const row = rows[rowId];
+    console.log(row);
+
+    const rowSpan = row.querySelector('div span');
+    const name = rowSpan.getAttribute('name');
+
+    if(row.classList.contains('full-name')) {
+        row.classList.remove('full-name');
+    }
+    if(name.length > rowSpan.innerText.length) row.classList.add('full-name');
+
+    rowSpan.setAttribute('name', rowSpan.innerText);
+    rowSpan.innerText = name;
 }
 
 // navigation tabs
@@ -233,6 +262,7 @@ nav.addEventListener('click', function(e) {
 
         if(index === 0) {
             table.classList.remove('hidden');
+            shorterBankName();
         }
         
         if(index === 1) {

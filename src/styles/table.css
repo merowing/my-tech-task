@@ -37,6 +37,15 @@
 .table-row div:nth-child(2) {
     text-align: left;
 }
+.table-row.full-name {
+    height: auto;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+.table-row:not(.th, .empty):hover {
+    background-color: #bbb;
+    cursor: pointer;
+}
 
 .table-row div.edit-buttons {
     width: 60px;

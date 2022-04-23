@@ -1,4 +1,4 @@
-import errorsString from "./errorMessage.js";
+import checkValue from "./checkValue.js";
 import { storage, getBankStorage } from "./localstorage.js";
 import { splitNumber } from "./modalWindow.js";
 
@@ -7,21 +7,30 @@ const formCalculator = document.querySelector('#formCalculator');
 const information = document.querySelector('.information');
 const formInputs = formCalculator.querySelectorAll('input');
     
-const banks = storage();
+//const banks = storage();
 calculate();
 
 // fill select
 const selectBank = calculator.querySelector('.select-bank > select');
 
-let optionsFragment = banks.reduce((prevItem, item) => {
-    let option = document.createElement('option');
-    option.value = item.id;
-    option.innerText = item.name;
-    prevItem.appendChild(option);
+selectFillListOfBanks();
+
+function selectFillListOfBanks() {
+    const banks = storage();
+    selectBank.innerHTML = '<option>Select a bank</option>';
+
+    let optionsFragment = banks.reduce((prevItem, item) => {
+        let option = document.createElement('option');
+        option.value = item.id;
+        option.innerText = item.name;
+        prevItem.appendChild(option);
+        
+        return prevItem;
+    }, document.createDocumentFragment());
+    selectBank.appendChild(optionsFragment);
     
-    return prevItem;
-}, document.createDocumentFragment());
-selectBank.appendChild(optionsFragment);
+    clearfillData();
+}
 
 selectBank.addEventListener('change', function() {
     let id = +this.value;
@@ -57,10 +66,11 @@ function clearfillData() {
     });
 
     formCalculator.querySelector(`input[name]`).value = 0;
-    information.innerText = '';
+    
+    calculate();
 }
 
-const errorArr = [];
+const errorBlock = document.querySelector('.calculator-error');
     
 formCalculator.addEventListener('keyup', function(e) {
     const val = e.target.value.replace(/,/g, '');
@@ -68,8 +78,6 @@ formCalculator.addEventListener('keyup', function(e) {
 
     e.target.value = splitNumber(val);
 
-    const errorBlock = document.querySelector('.calculator-error');
-    
     if(isNaN(val)) {
         errorBlock.classList.remove('hidden');
         errorBlock.innerText = errorsString['nan'];
@@ -171,3 +179,5 @@ function calculate() {
     //}
 
 }
+
+export default selectFillListOfBanks;

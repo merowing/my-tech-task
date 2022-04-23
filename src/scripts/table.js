@@ -1,7 +1,6 @@
+import { table } from './blocks.js';
 import { editImage, removeImage } from './images.js';
 import { storage } from './localstorage.js';
-
-const table = document.querySelector('.table');
 
 function addBankTable(data) {
     createTableRows([data]);
@@ -24,14 +23,21 @@ function removeBankTable(index) {
 
 function editBankTable(index, data) {
     let rows = table.querySelectorAll('.table-row');
-    console.log(index, data);
+
     let text = rows[index].querySelectorAll('div > span');
-    console.log(text);
-    Object.keys(data).map((item, index) => {
+    
+    Object.keys(data).map((item, ind) => {
         if(item !== 'id') {
-            text[index].innerText = data[item];
+            text[ind].innerText = data[item];
+        }
+        if(item === 'name' && rows[index].classList.contains('full-name')) {
+            text[ind].innerText = data[item];
+            text[ind].setAttribute('name', data[item]);
+            rows[ind].classList.remove('full-name');
         }
     });
+
+    shorterBankName(index);
 }
 
 function clearTable() {
@@ -71,7 +77,8 @@ function createTableRows(data) {
         let arrDiv = Object.keys(current).reduce((prev, item) => {
             if(item === 'id') return prev;
             
-            prev.push(`<div><span>${current[item]}</span></div>`);
+            const name = (item === 'name') ? `name="${current[item]}"` : null;
+            prev.push(`<div><span ${name}>${current[item]}</span></div>`);
             return prev;
         }, []);
 
@@ -94,12 +101,14 @@ function createTableRows(data) {
 
     if(data.length === 0) {
         rows = document.createElement('div');
-        rows.setAttribute('class', 'table-row');
+        rows.setAttribute('class', 'table-row empty');
         rows.innerText = 'Not found any bank!';
         rows.setAttribute('style', 'justify-content: center');
     }
 
     table.appendChild(rows);
+    
+    shorterBankName();
 }
 
 function createTable() {
@@ -110,4 +119,34 @@ function createTable() {
     createTableRows(banks);
 }
 
-export { createTable, addBankTable, editBankTable, removeBankTable, clearTable }
+function shorterBankName(ind = null) {
+    let tableRows = table.querySelectorAll('.table-row:not(.th)');
+    if(ind !== null) {
+        tableRows = [tableRows[ind-1]];
+    }
+
+    if(tableRows[0].querySelector('div')) {
+        [...tableRows].map(block => {
+            let row = block.querySelector('div span');
+            
+            let blockWidth = row.offsetWidth;
+            row.style.whiteSpace = 'nowrap';
+
+            let noWrapBlockWidth = row.offsetWidth;
+
+            row.removeAttribute('style');
+            
+            let text = row.innerText;
+            let lettersLen = text.length;
+
+            let letterWidth = Math.ceil(noWrapBlockWidth / lettersLen);
+            let lettersInRow = Math.floor(blockWidth / letterWidth) - 3;
+
+            if(noWrapBlockWidth > blockWidth) {
+                row.innerText = text.substr(0, lettersInRow) + '...';
+            }
+        });
+    }
+}
+
+export { createTable, addBankTable, editBankTable, removeBankTable, clearTable, shorterBankName }
