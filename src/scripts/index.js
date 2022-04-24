@@ -24,6 +24,7 @@ import unique from "./unique.js";
 import splitNumber from "./splitNumber.js";
 
 fillEmptyStorage();
+createSelectListOfBanks();
 createTable();
 
 const nav = document.querySelector('nav > ul');

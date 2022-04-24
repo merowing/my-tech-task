@@ -11,7 +11,6 @@ const selectBank = calculator.querySelector('.select-bank > select');
 calculate();
 
 // fill select
-createSelectListOfBanks();
 
 function createSelectListOfBanks() {
     const banks = storage();
