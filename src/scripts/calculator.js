@@ -79,7 +79,7 @@ selectBank.addEventListener('change', function() {
 });
 
 function fillData(data) {
-    Object.keys(data).map(key => {
+    Object.keys(data).forEach(key => {
         let field = formCalculator.querySelector(`input[name="${key}"]`);
         if(field && key !== 'interestRate') {
             const text = field.nextElementSibling.innerText.split(' ')[0];
@@ -206,7 +206,7 @@ formCalculator.addEventListener('click', function(e) {
 
 });
 function returnZero(event) {
-    [...formInputs].map(el => {
+    [...formInputs].forEach(el => {
         if(el.value === '' && event.target !== el) {
             el.value = 0;
             calculate();
