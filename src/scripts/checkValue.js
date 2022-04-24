@@ -10,7 +10,7 @@ const errorsString = {
     'bankPresent':  'This bank has been already added',
 };
 
-let checkValue = {
+const checkValue = {
     val: '',
     error: '',
 

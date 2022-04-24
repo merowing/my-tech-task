@@ -7,17 +7,17 @@ function addBankTable(data) {
 }
 
 function removeBankTable(index) {
-    let rows = table.querySelectorAll('.table-row');
-    table.removeChild(rows[index]);
-
-    rows = table.querySelectorAll('.table-row');
-    
-    if(index !== rows.length) {
-        [...rows].map((row, i) => row.querySelector('div').innerText = i + '.');
-    }
-    if(!storage().length) {
+    if(storage().length === 0) {
         table.innerHTML = '';
         createTableRows(storage());
+    }else {
+        const rows = [...table.querySelectorAll('.table-row:not(.th)')];
+        table.removeChild(rows[index - 1]);
+        rows.splice(index - 1, 1);
+        
+        rows.forEach((row, i) => {
+            row.querySelector('div').innerText = (i + 1) + '.';
+        });
     }
 }
 
@@ -26,7 +26,7 @@ function editBankTable(index, data) {
 
     let text = rows[index].querySelectorAll('div > span');
     
-    Object.keys(data).map((item, ind) => {
+    Object.keys(data).forEach((item, ind) => {
         if(item !== 'id') {
             text[ind].innerText = data[item];
         }
@@ -48,10 +48,10 @@ function clearTable() {
 function createTableHead() {
     const titles = ['#', 'Name of bank', 'Interest rate, %', 'Max loan', 'Min down payment', 'Loan term'];
 
-    let div = document.createElement('div');
+    const div = document.createElement('div');
     div.setAttribute('class', 'table-row th');
 
-    let head = titles.map(item => {
+    const head = titles.map(item => {
         return `<div><span>${item}</span></div>`;
     });
 
@@ -67,44 +67,47 @@ function createTableHead() {
 }
 
 function createTableRows(data) {
-    let fragment = document.createDocumentFragment();
-    
-    let rows = data.reduce((prev, current, ind) => {
-
-        let div = document.createElement('div');
-        div.setAttribute('class', 'table-row');
-        
-        let arrDiv = Object.keys(current).reduce((prev, item) => {
-            if(item === 'id') return prev;
-            
-            const name = (item === 'name') ? `name="${current[item]}"` : null;
-            prev.push(`<div><span ${name}>${current[item]}</span></div>`);
-            return prev;
-        }, []);
-
-        let bankNumber = ind + 1;
-        if(data.length === 1) bankNumber = storage().length;
-
-        div.innerHTML = `
-            <div id="${current['id']}">${bankNumber}.</div>
-            ${arrDiv.join('')}
-            <div class="edit-buttons">
-                <ul>
-                    <li class="edit" type="edit" title="edit">${ editImage }</li>
-                    <li class="remove" type="remove" title="remove">${ removeImage }</li>
-                </ul>
-            </div>`;
-
-        prev.appendChild(div);
-        
-        return prev;
-    }, fragment);
+    let rows;
 
     if(data.length === 0) {
         rows = document.createElement('div');
         rows.setAttribute('class', 'table-row empty');
         rows.innerText = 'Not found any bank!';
         rows.setAttribute('style', 'justify-content: center');
+    }else {
+
+        const fragment = document.createDocumentFragment();
+
+        rows = data.reduce((prev, current, ind) => {
+
+            const div = document.createElement('div');
+            div.setAttribute('class', 'table-row');
+            
+            const rowBankInfo = Object.keys(current).reduce((prev, item) => {
+                if(item === 'id') return prev;
+                
+                const name = (item === 'name') ? `name="${current[item]}"` : null;
+                prev.push(`<div><span ${name}>${current[item]}</span></div>`);
+                return prev;
+            }, []);
+
+            let bankNumber = ind + 1;
+            if(data.length === 1) bankNumber = storage().length;
+
+            div.innerHTML = `
+                <div id="${current['id']}">${bankNumber}.</div>
+                ${rowBankInfo.join('')}
+                <div class="edit-buttons">
+                    <ul>
+                        <li class="edit" type="edit" title="edit">${editImage}</li>
+                        <li class="remove" type="remove" title="remove">${removeImage}</li>
+                    </ul>
+                </div>`;
+
+            prev.appendChild(div);
+            
+            return prev;
+        }, fragment);
     }
 
     table.appendChild(rows);
@@ -114,7 +117,7 @@ function createTableRows(data) {
 
 function createTable() {
     table.innerHTML = '';
-    let banks = storage();
+    const banks = storage();
 
     if(banks.length > 0) createTableHead();
     createTableRows(banks);
@@ -127,21 +130,21 @@ function shorterBankName(ind = null) {
     }
 
     if(tableRows[0].querySelector('div')) {
-        [...tableRows].map(block => {
-            let row = block.querySelector('div span');
+        [...tableRows].forEach(block => {
+            const row = block.querySelector('div span');
             
-            let blockWidth = row.offsetWidth;
+            const blockWidth = row.offsetWidth;
             row.style.whiteSpace = 'nowrap';
 
-            let noWrapBlockWidth = row.offsetWidth;
+            const noWrapBlockWidth = row.offsetWidth;
 
             row.removeAttribute('style');
             
-            let text = row.innerText;
-            let lettersLen = text.length;
+            const text = row.innerText;
+            const lettersLen = text.length;
 
-            let letterWidth = Math.ceil(noWrapBlockWidth / lettersLen);
-            let lettersInRow = Math.floor(blockWidth / letterWidth) - 3;
+            const letterWidth = Math.ceil(noWrapBlockWidth / lettersLen);
+            const lettersInRow = Math.floor(blockWidth / letterWidth) - 3;
 
             if(noWrapBlockWidth > blockWidth) {
                 row.innerText = text.substr(0, lettersInRow) + '...';
