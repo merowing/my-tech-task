@@ -1,27 +1,27 @@
 import checkValue from "./checkValue.js";
-import { storage, getBankStorage } from "./localstorage.js";
-import { splitNumber } from "./modalWindow.js";
+import { storage, getBank } from "./localstorage.js";
+import splitNumber from "./splitNumber.js";
+import { calculator } from './blocks.js';
 
-const calculator = document.querySelector('.calculator');
 const formCalculator = document.querySelector('#formCalculator');
 const information = document.querySelector('.information');
 const formInputs = formCalculator.querySelectorAll('input');
-    
+const selectBank = calculator.querySelector('.select-bank > select');
+
 calculate();
 
 // fill select
-const selectBank = calculator.querySelector('.select-bank > select');
+createSelectListOfBanks();
 
-selectFillListOfBanks();
-
-function selectFillListOfBanks() {
+function createSelectListOfBanks() {
     const banks = storage();
     selectBank.innerHTML = '<option>Select a bank</option>';
 
-    let optionsFragment = banks.reduce((prevItem, item) => {
-        let option = document.createElement('option');
-        option.value = item.id;
-        option.innerText = item.name;
+    const optionsFragment = banks.reduce((prevItem, item, ind) => {
+        const { name, id } = item;
+        const option = document.createElement('option');
+        option.value = id;
+        option.innerText = `${(ind + 1)}. ${name}`;
         prevItem.appendChild(option);
         
         return prevItem;
@@ -30,36 +30,49 @@ function selectFillListOfBanks() {
     
     clearfillData();
 }
-function selectAddOption(id) {
-    let data = getBankStorage(id);
-    let option = document.createElement('option');
-    option.value = data.id;
-    option.innerText = data.name;
+
+function selectAddOption(ind) {
+    const { id, name } = getBank(ind);
+    const option = document.createElement('option');
+    option.value = id;
+    option.innerText = `${storage().length}. ${name}`;
     
     selectBank.appendChild(option);
 }
+
 function selectRemoveOption(id) {
-    let opts = selectBank.querySelectorAll('option');
-    let opt = [...opts].filter(item => +item.value === +id)[0];
-    let ind = [...selectBank].findIndex(item => +item.value === +id);
+    const optionElements = selectBank.querySelectorAll('option');
+    const optionElement = [...optionElements].filter(item => +item.value === +id)[0];
+    const ind = [...selectBank].findIndex(item => +item.value === +id);
     
-    let selIndex = selectBank.selectedIndex;
-    if(+opts[selIndex].value === +id) {
+    const selIndex = selectBank.selectedIndex;
+    if(+optionElements[selIndex].value === +id) {
         selectBank.selectedIndex = ind - 1;
     }
-    opt.parentNode.removeChild(opt);
+    optionElement.parentNode.removeChild(optionElement);
+
+    selectBank.dispatchEvent(new Event('change'));
+}
+
+function selectEditOption(id) {
+    const optionElements = selectBank.querySelectorAll('option');
+    const optionElement = [...optionElements].filter(item => +item.value === +id)[0];
+    
+    const optionNumber = optionElement.innerText.match(/^[0-9]+\./g)[0];
+    optionElement.innerText = `${optionNumber} ${getBank(id).name}`;
 
     selectBank.dispatchEvent(new Event('change'));
 }
 
 selectBank.addEventListener('change', function() {
-    let id = +this.value;
-    let data = getBankStorage(id);
-    if(data) {
-        fillData(data);
-    }else {
+    const id = +this.value;
+    if(isNaN(id)) {
         clearfillData();
+        return false;
     }
+
+    const data = getBank(id);
+    fillData(data);
 
     calculateErrors();
     calculate();
@@ -79,7 +92,7 @@ function fillData(data) {
 }
 
 function clearfillData() {
-    [...formCalculator.querySelectorAll(`span.title`)].map(el => {
+    [...formCalculator.querySelectorAll(`span.title`)].forEach(el => {
         let text = el.innerText.split(' ')[0];
         
         if(text) {
@@ -87,7 +100,7 @@ function clearfillData() {
         }
     });
 
-    [...formCalculator.querySelectorAll(`input[name]`)].map(el => {
+    [...formCalculator.querySelectorAll(`input[name]`)].forEach(el => {
         el.value = 0;
     });
 
@@ -117,6 +130,10 @@ function calculateErrors() {
     errorBlock.innerText = ''
     errorBlock.classList.add('hidden');
     
+    const maxLoan = formInputs[1].value.replace(/,/g, '');
+    const minPayment = formInputs[2].value.replace(/,/g, '');
+    const loanTerm = formInputs[3].value;
+
     let errors = [...formInputs].map((input, ind) => {
         let nameAttr = input.getAttribute('name');
         if(nameAttr !== 'interestRate') {
@@ -134,25 +151,27 @@ function calculateErrors() {
                         .getMessage();
             
             if(nameAttr === 'maximumLoan') {
-                err = checkValue.loanLess(formInputs[1].value.replace(/,/g, ''), formInputs[2].value.replace(/,/g, '')).getMessage();
+                err = checkValue.loanLess(maxLoan, minPayment).getMessage();
             
-                if(+formInputs[1].value.replace(/,/g, '') > getBankStorage(id).maximumLoan) {
+                if(+maxLoan > getBank(id).maximumLoan) {
                     err = 'value more than bank allows';
                 }
 
             }
 
             if(nameAttr === 'minimumDownPayment') {
-                let paymentNum = +formInputs[2].value.replace(/,/g, '');
-                if(paymentNum < getBankStorage(id).minimumDownPayment && paymentNum !== 0) {
+                let paymentNum = +minPayment;
+                if(paymentNum < getBank(id).minimumDownPayment && paymentNum !== 0) {
                     err = 'value less than bank allows';
                 }
             }
 
             if(nameAttr === 'loanTerm') {
-                let termNum = +formInputs[3].value.match(/[0-9]+/)[0];
-                if(termNum > getBankStorage(id).loanTerm && termNum > 0) {
-                    err = 'bank doesn\'t allow to take for a longer period';
+                if(loanTerm !== '') {
+                    let termNum = +loanTerm.match(/[0-9]+/)[0];
+                    if(termNum > getBank(id).loanTerm && termNum > 0) {
+                        err = 'bank doesn\'t allow to take for a longer period';
+                    }
                 }
             }
 
@@ -163,7 +182,7 @@ function calculateErrors() {
         }
     }).filter(item => item);
 
-    if(!errors.length) calculate();
+    if(errors.length === 0) calculate();
     else {
         errorBlock.classList.remove('hidden');
         errorBlock.innerHTML = errors.join('<br>');
@@ -171,7 +190,7 @@ function calculateErrors() {
 }
 
 formCalculator.addEventListener('click', function(e) {
-    let tag = e.target;
+    const tag = e.target;
     if(tag.tagName === 'INPUT' && tag.value === '0') {
         tag.value = '';
     }
@@ -202,7 +221,7 @@ function returnZero(event) {
 document.body.addEventListener('click', e => returnZero(e));
 
 function calculate() {
-    let formData = new FormData(formCalculator);
+    const formData = new FormData(formCalculator);
 
     const { maximumLoan, minimumDownPayment, interestRate, loanTerm } = [...formData.entries()].reduce((prev, current) => {
         let [key, value] = current;
@@ -246,4 +265,4 @@ function calculate() {
 
 }
 
-export { selectFillListOfBanks, selectAddOption, selectRemoveOption };
+export { selectAddOption, selectRemoveOption, createSelectListOfBanks, selectEditOption };

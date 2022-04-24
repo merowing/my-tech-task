@@ -1,18 +1,43 @@
-import { infoImage } from "./images.js";
-import { storage, addBankStorage, editBankStorage, removeBankStorage, clearStorage, getBankStorage, fillEmptyStorage } from "./localstorage.js";
-import { addBankTable, clearTable, createTable, editBankTable, removeBankTable, shorterBankName } from "./table.js";
+import {
+    storage,
+    addBank,
+    editBank,
+    removeBank,
+    clearStorage,
+    getBank,
+    fillEmptyStorage
+} from "./localstorage.js";
+import {
+    addBankTable,
+    clearTable,
+    createTable,
+    editBankTable,
+    removeBankTable,
+    shorterBankName
+} from "./table.js";
 import { table, calculator, form, errorMessage } from './blocks.js';
-import { toggleModalWindow, splitNumber, clearModalWindowData, setModalWindowData } from './modalWindow.js';
+import { toggleModalWindow, clearModalWindowData, setModalWindowData } from './modalWindow.js';
+import { selectAddOption, selectRemoveOption, createSelectListOfBanks, selectEditOption } from "./calculator.js";
+import { infoImage } from "./images.js";
 import checkValue from "./checkValue.js";
 import unique from "./unique.js";
-import { selectFillListOfBanks, selectAddOption, selectRemoveOption } from "./calculator.js";
+import splitNumber from "./splitNumber.js";
 
 fillEmptyStorage();
-selectFillListOfBanks();
-
 createTable();
 
+const nav = document.querySelector('nav > ul');
+const tabs = nav.querySelectorAll('li');
+
 const newBankButton = document.querySelector('.new-bank');
+
+const loan = document.querySelector('#loan');
+const payment = document.querySelector('#down-payment');
+const rate = document.querySelector('#rate');
+const addButtonModal = document.querySelector('.add-btn');
+const closeButtonModal = document.querySelector('.cancel-btn');
+const inputs = form.querySelectorAll('input');
+
 newBankButton.addEventListener('click', function() {
     clearModalWindowData();
     
@@ -23,12 +48,6 @@ newBankButton.addEventListener('click', function() {
 });
 
 // form
-const loan = document.querySelector('#loan');
-const payment = document.querySelector('#down-payment');
-const rate = document.querySelector('#rate');
-const addButtonModal = document.querySelector('.add-btn');
-const closeButtonModal = document.querySelector('.cancel-btn');
-const inputs = form.querySelectorAll('input');
 
 form.addEventListener('keydown', function(e) {
     const target = e.target;
@@ -43,7 +62,7 @@ rate.addEventListener('keyup', function() {
 });
 
 loan.addEventListener('keyup', function() {
-    let num = this.value.replace(/,/g, '');
+    const num = this.value.replace(/,/g, '');
     this.value = splitNumber(num);
 });
 
@@ -54,21 +73,21 @@ payment.addEventListener('keyup', function(e) {
 
 addButtonModal.addEventListener('click', function(e) {
     e.preventDefault();
-    let bank = new FormData(form);
+    const bank = new FormData(form);
     const mode = this.getAttribute('edit');
 
-    [...inputs].map(item => {
+    [...inputs].forEach(item => {
         item.classList.remove('empty');
         item.value = item.value.replace(/^\s+|\s+$/g, '');
     });
     let err = '';
     let errors = [];
 
-    let formData = [...bank.entries()].reduce((prev, current, ind) => {
+    const formData = [...bank.entries()].reduce((prev, current, ind) => {
         let [key, value] = current;
 
         switch(key) {
-            case 'name':
+            case 'name': {
                 let changeName = storage().some(item => item.name === value);
                 if(typeof form.getAttribute('id') !== 'object') {
                     changeName = storage().some(item => {
@@ -78,17 +97,21 @@ addButtonModal.addEventListener('click', function(e) {
                 err = checkValue.set(value).empty();
                 if(changeName) err = err.bankPresent();
                 break;
-            case 'minimumDownPayment':
+            }
+            case 'minimumDownPayment': {
                 value = value.replace(/,/g, '');
                 err = checkValue.set(value)
                     .loanLess(loan.value.replace(/,/g,''), payment.value.replace(/,/g, ''));
                 break;
-            case 'loanTerm':
+            }
+            case 'loanTerm': {
                 err = checkValue.set(value).integer();
                 break;
-            default:
+            }
+            default: {
                 value = value.replace(/,/g, '');
                 err = checkValue.set(value);
+            }
         }
 
         if(key !== 'name') {
@@ -101,7 +124,7 @@ addButtonModal.addEventListener('click', function(e) {
         
         err = err.getMessage();
 
-        if(err && !errors.length) {
+        if(err && errors.length === 0) {
             errors = [ind, err];
         }
 
@@ -110,10 +133,10 @@ addButtonModal.addEventListener('click', function(e) {
         return prev;
     }, {});
     
-    if(errors.length) {
-        errorMessage.innerText = errors[1];
+    if(errors.length > 0) {
+        const [inputIndex, errMess] = errors;
+        errorMessage.innerText = errMess;
 
-        const inputIndex = errors[0];
         inputs[inputIndex].classList.add('empty');
         inputs[inputIndex].focus();
 
@@ -122,17 +145,19 @@ addButtonModal.addEventListener('click', function(e) {
 
     if(+mode) {
         formData.id = +form.getAttribute('id');
-        editBankStorage(formData);
+        editBank(formData);
 
-        let ind = +form.getAttribute('rowId');
-        editBankTable(ind, formData);
+        const rowId = +form.getAttribute('rowId');
+        editBankTable(rowId, formData);
+
+        selectEditOption(formData.id);
     }else {
         formData['id'] = unique();
         if(storage().length === 0) {
-            addBankStorage(formData);
+            addBank(formData);
             createTable();
         }else {
-            addBankStorage(formData);
+            addBank(formData);
             addBankTable(formData);
         }
 
@@ -142,30 +167,30 @@ addButtonModal.addEventListener('click', function(e) {
     toggleModalWindow();
 });
 
-const info = document.querySelectorAll('.info');
+const infoElements = document.querySelectorAll('.info');
 const tooltip = document.querySelector('#tooltip');
 
-for(let i = 0; i < info.length; i++) {
-    info[i].innerHTML = infoImage;
+infoElements.forEach(info => {
+    info.innerHTML = infoImage;
     
-    info[i].addEventListener('mouseover', function() {
+    info.addEventListener('mouseover', function() {
 
         tooltip.innerText = this.dataset.tooltip;
         tooltip.classList.add('visible');
 
-        let infoLeft = this.offsetLeft + 30;
-        let infoTop = this.offsetTop;
-        let tooltipHeight = tooltip.offsetHeight / 2;
+        const infoLeft = this.offsetLeft + 30;
+        const infoTop = this.offsetTop;
+        const tooltipHeight = tooltip.offsetHeight / 2;
 
         tooltip.style.left = infoLeft + 'px';
         tooltip.style.top = infoTop - tooltipHeight + (this.parentNode.clientHeight / 2) + 'px';
     });
 
-    info[i].addEventListener('mouseout', function() {
+    info.addEventListener('mouseout', function() {
         tooltip.classList.remove('visible');
         tooltip.innerText = '';
     });
-}
+});
 
 closeButtonModal.addEventListener('click', function(e) {
     e.preventDefault();
@@ -195,11 +220,11 @@ table.addEventListener('click', function(e) {
     const className = targetLi.getAttribute('type');
 
     switch(className) {
-        case 'edit':
+        case 'edit': {
             toggleModalWindow();
             clearModalWindowData();
             
-            const dataBank = getBankStorage(bankId);
+            const dataBank = getBank(bankId);
             setModalWindowData(dataBank);
             
             addButtonModal.setAttribute('edit', "1");
@@ -209,16 +234,19 @@ table.addEventListener('click', function(e) {
             form.setAttribute('rowId', rowId);
 
             break;
-        case 'remove':
-            removeBankStorage(bankId);
+        }
+        case 'remove': {
+            removeBank(bankId);
             removeBankTable(rowId);
             
             selectRemoveOption(bankId);
             break;
-        default:
+        }
+        default: {
             clearStorage();
             clearTable();
-            selectFillListOfBanks();
+            createSelectListOfBanks();
+        }
     }
     
 });
@@ -235,8 +263,7 @@ function getRowElem(tag, name, clss = false) {
 
 function toggleBankFullName(rowId, rows) {
     const row = rows[rowId];
-    console.log(row);
-
+    
     const rowSpan = row.querySelector('div span');
     const name = rowSpan.getAttribute('name');
 
@@ -251,13 +278,11 @@ function toggleBankFullName(rowId, rows) {
 
 // navigation tabs
 
-let nav = document.querySelector('nav > ul');
-let tabs = nav.querySelectorAll('li');
 nav.addEventListener('click', function(e) {
-    let index = [...tabs].findIndex(el => el === e.target);
+    const index = [...tabs].findIndex(el => el === e.target);
 
     if(index !== tabs.length - 1 && index !== -1) {
-        [...tabs].map(el => el.classList.remove('active'));
+        [...tabs].forEach(el => el.classList.remove('active'));
         e.target.classList.add('active');
 
         calculator.classList.add('hidden');
