@@ -63,9 +63,6 @@ function selectEditOption(id) {
 
     selectBank.dispatchEvent(new Event('change'));
 }
-function selectEditOption() {
-    selectBank.dispatchEvent(new Event('change'));
-}
 
 selectBank.addEventListener('change', function() {
     const id = +this.value;
